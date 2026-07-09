@@ -1,0 +1,90 @@
+#claude-translate-btn {
+  position: absolute;
+  z-index: 2147483646;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #5b5bd6;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  font-family: sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  transform: scale(0.8);
+  user-select: none;
+}
+
+#claude-translate-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+
+#claude-translate-btn:hover {
+  background: #4747c2;
+}
+
+#claude-translate-bubble {
+  position: absolute;
+  z-index: 2147483647;
+  max-width: 360px;
+  min-width: 120px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  word-break: break-word;
+}
+
+#claude-translate-bubble.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#claude-translate-bubble.loading {
+  background: #fff;
+  color: #555;
+  border: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#claude-translate-bubble.result {
+  background: #fff;
+  color: #1a1a2e;
+  border: 1px solid #5b5bd6;
+}
+
+#claude-translate-bubble.error {
+  background: #fff5f5;
+  color: #c53030;
+  border: 1px solid #feb2b2;
+}
+
+.claude-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #ddd;
+  border-top-color: #5b5bd6;
+  border-radius: 50%;
+  animation: claude-spin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes claude-spin {
+  to { transform: rotate(360deg); }
+}

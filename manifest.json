@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "英翻中翻譯器",
+  "version": "1.0",
+  "description": "選取英文文字，即時顯示中文翻譯（由 Claude AI 提供）",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://api.anthropic.com/*"
+  ],
+  "background": {
+    "service_worker": "background/service-worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content/content.js"],
+      "css": ["content/content.css"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "英翻中翻譯器"
+  }
+}

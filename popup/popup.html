@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>英翻中翻譯器設定</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="container">
+    <h2>英翻中翻譯器</h2>
+    <p class="desc">由 Claude AI 驅動</p>
+
+    <div class="field">
+      <label for="apiKey">Claude API Key</label>
+      <input
+        type="password"
+        id="apiKey"
+        placeholder="sk-ant-..."
+        autocomplete="off"
+      />
+    </div>
+
+    <button id="saveBtn">儲存</button>
+    <div id="status"></div>
+
+    <div class="hint">
+      <strong>如何取得 API Key？</strong><br/>
+      前往 console.anthropic.com → API Keys → 建立新 Key
+    </div>
+
+    <div class="usage">
+      <strong>使用方式</strong><br/>
+      在任意網頁上選取英文文字，點擊出現的「譯」按鈕即可翻譯。
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
