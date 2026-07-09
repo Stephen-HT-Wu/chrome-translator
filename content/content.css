@@ -96,6 +96,35 @@
   font-style: italic;
 }
 
+/* ── 沈浸式翻譯進度條 ── */
+
+#claude-progress-bar {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 2147483647;
+  padding: 10px 16px;
+  background: #1a1a2e;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 13px;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+#claude-progress-bar.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#claude-progress-bar.done {
+  background: #2d7a2d;
+}
+
 /* ── 共用 spinner ── */
 
 .claude-spinner {

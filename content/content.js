@@ -140,12 +140,45 @@ const translatedSet = new WeakSet();
 let immersiveQueue = [];
 let immersiveActive = 0;
 let immersiveObserver = null;
+let progressTotal = 0;
+let progressDone = 0;
 
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg.type === 'START_IMMERSIVE') {
     startImmersiveTranslation();
   }
 });
+
+// ── 進度條 ────────────────────────────────────────────────
+
+let progressBar = null;
+
+function getProgressBar() {
+  if (!progressBar) {
+    progressBar = document.createElement('div');
+    progressBar.id = 'claude-progress-bar';
+    document.body.appendChild(progressBar);
+  }
+  return progressBar;
+}
+
+function updateProgress() {
+  const bar = getProgressBar();
+  const remaining = immersiveQueue.length + immersiveActive;
+
+  if (remaining === 0) {
+    bar.textContent = `✓ 翻譯完成（共 ${progressDone} 段）`;
+    bar.classList.add('done');
+    setTimeout(() => {
+      bar.classList.remove('visible', 'done');
+    }, 2500);
+  } else {
+    bar.className = 'visible';
+    bar.textContent = `正在翻譯… ${progressDone} / ${progressTotal} 段`;
+  }
+}
+
+// ── 沈浸式翻譯邏輯 ────────────────────────────────────────
 
 function isEnglish(text) {
   const clean = text.trim();
@@ -155,6 +188,9 @@ function isEnglish(text) {
 }
 
 function startImmersiveTranslation() {
+  progressTotal = 0;
+  progressDone = 0;
+
   // 掃描現有段落
   document.querySelectorAll(SELECTORS).forEach(enqueueElement);
 
@@ -181,6 +217,8 @@ function enqueueElement(el) {
 
   translatedSet.add(el);
   immersiveQueue.push(el);
+  progressTotal++;
+  updateProgress();
   processImmersiveQueue();
 }
 
@@ -190,6 +228,8 @@ function processImmersiveQueue() {
     immersiveActive++;
     translateElementImmersive(el).finally(() => {
       immersiveActive--;
+      progressDone++;
+      updateProgress();
       processImmersiveQueue();
     });
   }
@@ -219,7 +259,7 @@ function translateElementImmersive(el) {
         div.remove();
         resolve();
       } else if (state === 'done') {
-        if (!started) div.remove(); // 沒收到任何內容
+        if (!started) div.remove();
         resolve();
       }
     });
