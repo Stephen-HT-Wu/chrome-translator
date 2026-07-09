@@ -112,6 +112,10 @@ document.addEventListener('mousedown', (e) => {
 
 // callback(state, text): state = 'chunk' | 'error' | 'done'
 function startStreaming(text, callback) {
+  if (!chrome.runtime?.connect) {
+    callback('error', '插件已更新，請重新整理頁面');
+    return;
+  }
   const port = chrome.runtime.connect({ name: 'translate' });
 
   port.onMessage.addListener((msg) => {
