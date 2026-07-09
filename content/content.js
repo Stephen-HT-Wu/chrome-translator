@@ -13,13 +13,14 @@ function createTranslateBtn() {
 
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
+    showBubble('loading');
+    let started = false;
     startStreaming(selectedText, (state, text) => {
-      if (state === 'start') {
-        showBubble('loading');
-      } else if (state === 'chunk') {
-        if (bubble.className.includes('loading')) {
+      if (state === 'chunk') {
+        if (!started) {
           bubble.textContent = '';
           bubble.className = 'result visible';
+          started = true;
         }
         bubble.textContent += text;
       } else if (state === 'error') {
