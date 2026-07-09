@@ -1,14 +1,14 @@
 const apiKeyInput = document.getElementById('apiKey');
 const saveBtn = document.getElementById('saveBtn');
 const statusEl = document.getElementById('status');
+const immersiveBtn = document.getElementById('immersiveBtn');
 
 // 載入已儲存的 Key
 chrome.storage.local.get('apiKey', ({ apiKey }) => {
-  if (apiKey) {
-    apiKeyInput.value = apiKey;
-  }
+  if (apiKey) apiKeyInput.value = apiKey;
 });
 
+// 儲存 API Key
 saveBtn.addEventListener('click', () => {
   const key = apiKeyInput.value.trim();
 
@@ -24,6 +24,14 @@ saveBtn.addEventListener('click', () => {
 
   chrome.storage.local.set({ apiKey: key }, () => {
     showStatus('已儲存！');
+  });
+});
+
+// 沈浸式翻譯
+immersiveBtn.addEventListener('click', () => {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    chrome.tabs.sendMessage(tabs[0].id, { type: 'START_IMMERSIVE' });
+    window.close();
   });
 });
 

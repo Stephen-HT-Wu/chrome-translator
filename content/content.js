@@ -1,3 +1,5 @@
+// ── 選字翻譯 ──────────────────────────────────────────────
+
 let bubble = null;
 let translateBtn = null;
 let selectedText = '';
@@ -11,7 +13,19 @@ function createTranslateBtn() {
 
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
-    startStreaming(selectedText);
+    startStreaming(selectedText, (state, text) => {
+      if (state === 'start') {
+        showBubble('loading');
+      } else if (state === 'chunk') {
+        if (bubble.className.includes('loading')) {
+          bubble.textContent = '';
+          bubble.className = 'result visible';
+        }
+        bubble.textContent += text;
+      } else if (state === 'error') {
+        showBubble('error', text);
+      }
+    });
   });
 
   return btn;
@@ -35,13 +49,6 @@ function hideTranslateBtn() {
   if (translateBtn) translateBtn.classList.remove('visible');
 }
 
-function positionBubble() {
-  if (!bubble || !translateBtn) return;
-  const btnRect = translateBtn.getBoundingClientRect();
-  bubble.style.left = `${btnRect.left + window.scrollX}px`;
-  bubble.style.top = `${btnRect.bottom + window.scrollY + 6}px`;
-}
-
 function showBubble(state, text = '') {
   if (!bubble) bubble = createBubble();
 
@@ -56,47 +63,17 @@ function showBubble(state, text = '') {
     bubble.className = 'error';
   }
 
-  positionBubble();
-  bubble.classList.add('visible');
-}
+  if (translateBtn) {
+    const btnRect = translateBtn.getBoundingClientRect();
+    bubble.style.left = `${btnRect.left + window.scrollX}px`;
+    bubble.style.top = `${btnRect.bottom + window.scrollY + 6}px`;
+  }
 
-function appendBubbleText(text) {
-  if (!bubble) return;
-  bubble.textContent += text;
+  bubble.classList.add('visible');
 }
 
 function hideBubble() {
   if (bubble) bubble.classList.remove('visible');
-}
-
-function startStreaming(text) {
-  showBubble('loading');
-
-  const port = chrome.runtime.connect({ name: 'translate' });
-  let started = false;
-
-  port.onMessage.addListener((msg) => {
-    if (msg.type === 'chunk') {
-      if (!started) {
-        // 第一個字到了，切換成結果模式
-        bubble.textContent = '';
-        bubble.className = 'result visible';
-        started = true;
-      }
-      appendBubbleText(msg.text);
-    } else if (msg.type === 'error') {
-      showBubble('error', msg.error);
-      port.disconnect();
-    } else if (msg.type === 'done') {
-      port.disconnect();
-    }
-  });
-
-  port.onDisconnect.addListener(() => {
-    if (!started) showBubble('error', '連線中斷，請重試');
-  });
-
-  port.postMessage({ text });
 }
 
 document.addEventListener('mouseup', (e) => {
@@ -129,3 +106,121 @@ document.addEventListener('mousedown', (e) => {
     hideBubble();
   }
 });
+
+// ── 共用串流函式 ───────────────────────────────────────────
+
+// callback(state, text): state = 'chunk' | 'error' | 'done'
+function startStreaming(text, callback) {
+  const port = chrome.runtime.connect({ name: 'translate' });
+
+  port.onMessage.addListener((msg) => {
+    if (msg.type === 'chunk') {
+      callback('chunk', msg.text);
+    } else if (msg.type === 'error') {
+      callback('error', msg.error);
+      port.disconnect();
+    } else if (msg.type === 'done') {
+      callback('done', '');
+      port.disconnect();
+    }
+  });
+
+  port.onDisconnect.addListener(() => callback('done', ''));
+  port.postMessage({ text });
+}
+
+// ── 沈浸式翻譯 ────────────────────────────────────────────
+
+const SELECTORS = 'p, h1, h2, h3, h4, h5, h6, li, blockquote, td, th';
+const MIN_LENGTH = 30;
+const CONCURRENCY = 2;
+
+const translatedSet = new WeakSet();
+let immersiveQueue = [];
+let immersiveActive = 0;
+let immersiveObserver = null;
+
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.type === 'START_IMMERSIVE') {
+    startImmersiveTranslation();
+  }
+});
+
+function isEnglish(text) {
+  const clean = text.trim();
+  if (clean.length < MIN_LENGTH) return false;
+  const englishChars = (clean.match(/[a-zA-Z]/g) || []).length;
+  return englishChars / clean.length > 0.4;
+}
+
+function startImmersiveTranslation() {
+  // 掃描現有段落
+  document.querySelectorAll(SELECTORS).forEach(enqueueElement);
+
+  // 監聽動態新增內容
+  if (!immersiveObserver) {
+    immersiveObserver = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (node.nodeType !== Node.ELEMENT_NODE) continue;
+          if (node.matches?.(SELECTORS)) enqueueElement(node);
+          node.querySelectorAll?.(SELECTORS).forEach(enqueueElement);
+        }
+      }
+    });
+    immersiveObserver.observe(document.body, { childList: true, subtree: true });
+  }
+}
+
+function enqueueElement(el) {
+  if (translatedSet.has(el)) return;
+  if (el.closest('pre, code, script, style, noscript')) return;
+  if (el.classList.contains('claude-immersive')) return;
+  if (!isEnglish(el.innerText || el.textContent || '')) return;
+
+  translatedSet.add(el);
+  immersiveQueue.push(el);
+  processImmersiveQueue();
+}
+
+function processImmersiveQueue() {
+  while (immersiveActive < CONCURRENCY && immersiveQueue.length > 0) {
+    const el = immersiveQueue.shift();
+    immersiveActive++;
+    translateElementImmersive(el).finally(() => {
+      immersiveActive--;
+      processImmersiveQueue();
+    });
+  }
+}
+
+function translateElementImmersive(el) {
+  const text = (el.innerText || el.textContent || '').trim();
+  if (!text) return Promise.resolve();
+
+  const div = document.createElement('div');
+  div.className = 'claude-immersive loading';
+  div.textContent = '翻譯中...';
+  el.insertAdjacentElement('afterend', div);
+
+  return new Promise((resolve) => {
+    let started = false;
+
+    startStreaming(text, (state, chunk) => {
+      if (state === 'chunk') {
+        if (!started) {
+          div.textContent = '';
+          div.classList.remove('loading');
+          started = true;
+        }
+        div.textContent += chunk;
+      } else if (state === 'error') {
+        div.remove();
+        resolve();
+      } else if (state === 'done') {
+        if (!started) div.remove(); // 沒收到任何內容
+        resolve();
+      }
+    });
+  });
+}

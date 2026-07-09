@@ -71,6 +71,19 @@ button:hover {
   background: #4747c2;
 }
 
+.immersive-btn {
+  background: #2d7a2d;
+}
+
+.immersive-btn:hover {
+  background: #236023;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #eee;
+}
+
 #status {
   font-size: 13px;
   min-height: 18px;

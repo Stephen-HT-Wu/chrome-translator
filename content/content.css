@@ -1,3 +1,5 @@
+/* ── 選字翻譯按鈕 ── */
+
 #claude-translate-btn {
   position: absolute;
   z-index: 2147483646;
@@ -30,6 +32,8 @@
 #claude-translate-btn:hover {
   background: #4747c2;
 }
+
+/* ── 選字翻譯氣泡 ── */
 
 #claude-translate-bubble {
   position: absolute;
@@ -73,6 +77,26 @@
   color: #c53030;
   border: 1px solid #feb2b2;
 }
+
+/* ── 沈浸式翻譯段落 ── */
+
+.claude-immersive {
+  color: #888;
+  font-size: 0.95em;
+  line-height: 1.7;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  font-family: inherit;
+  border-left: 3px solid #ddd;
+  padding-left: 10px;
+}
+
+.claude-immersive.loading {
+  color: #bbb;
+  font-style: italic;
+}
+
+/* ── 共用 spinner ── */
 
 .claude-spinner {
   display: inline-block;
