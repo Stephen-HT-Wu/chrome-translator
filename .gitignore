@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Chrome extension package
+*.crx
+*.pem
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log
