@@ -121,6 +121,11 @@ function startStreaming(text, callback) {
   port.onMessage.addListener((msg) => {
     if (msg.type === 'chunk') {
       callback('chunk', msg.text);
+    } else if (msg.type === 'usage_input' || msg.type === 'usage_output') {
+      const key = msg.type === 'usage_input' ? 'totalInputTokens' : 'totalOutputTokens';
+      chrome.storage.local.get([key], (result) => {
+        chrome.storage.local.set({ [key]: (result[key] || 0) + msg.tokens });
+      });
     } else if (msg.type === 'error') {
       callback('error', msg.error);
       port.disconnect();

@@ -3,10 +3,34 @@ const saveBtn = document.getElementById('saveBtn');
 const statusEl = document.getElementById('status');
 const immersiveBtn = document.getElementById('immersiveBtn');
 
-// 載入已儲存的 Key
-chrome.storage.local.get('apiKey', ({ apiKey }) => {
-  if (apiKey) apiKeyInput.value = apiKey;
+const INPUT_PRICE_PER_TOKEN = 0.80 / 1_000_000;
+const OUTPUT_PRICE_PER_TOKEN = 4.00 / 1_000_000;
+
+// 載入已儲存的 Key 與用量
+chrome.storage.local.get(['apiKey', 'totalInputTokens', 'totalOutputTokens'], (result) => {
+  if (result.apiKey) apiKeyInput.value = result.apiKey;
+  renderUsage(result.totalInputTokens || 0, result.totalOutputTokens || 0);
 });
+
+function renderUsage(inputTokens, outputTokens) {
+  const cost = inputTokens * INPUT_PRICE_PER_TOKEN + outputTokens * OUTPUT_PRICE_PER_TOKEN;
+  const totalTokens = inputTokens + outputTokens;
+  const usageEl = document.getElementById('usageInfo');
+  if (totalTokens === 0) {
+    usageEl.textContent = '';
+    return;
+  }
+  usageEl.innerHTML =
+    `累積用量：${totalTokens.toLocaleString()} tokens` +
+    `<span class="cost">≈ $${cost.toFixed(4)}</span>` +
+    `<button id="resetBtn" class="reset-btn">清除</button>`;
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    chrome.storage.local.set({ totalInputTokens: 0, totalOutputTokens: 0 }, () => {
+      renderUsage(0, 0);
+    });
+  });
+}
 
 // 儲存 API Key
 saveBtn.addEventListener('click', () => {

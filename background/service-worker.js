@@ -56,6 +56,10 @@ chrome.runtime.onConnect.addListener((port) => {
             const parsed = JSON.parse(data);
             if (parsed.type === 'content_block_delta' && parsed.delta?.type === 'text_delta') {
               port.postMessage({ type: 'chunk', text: parsed.delta.text });
+            } else if (parsed.type === 'message_start') {
+              port.postMessage({ type: 'usage_input', tokens: parsed.message?.usage?.input_tokens ?? 0 });
+            } else if (parsed.type === 'message_delta') {
+              port.postMessage({ type: 'usage_output', tokens: parsed.usage?.output_tokens ?? 0 });
             }
           } catch {}
         }
